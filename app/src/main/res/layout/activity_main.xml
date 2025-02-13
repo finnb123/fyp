@@ -60,6 +60,24 @@
         android:textAlignment="center" />
 
     <TextView
+        android:id="@+id/eventTxt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:text="Event?"
+        android:textAlignment="center" />
+
+
+    <TextView
+        android:id="@+id/confidenceTxt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:text="Confidence"
+        android:textAlignment="center" />
+
+
+    <TextView
         android:id="@+id/timeTxt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -11,11 +11,15 @@ public class MessageHelper {
     JSONObject fullMessage = new JSONObject();
     private final String sender = Build.ID;
     private final String message;
+    private final boolean event;
+    private final double confidence;
 
 
     private final String time;
-    public MessageHelper(String message){
+    public MessageHelper(String message, boolean event, double confidence){
         this.message = message;
+        this.event = event;
+        this.confidence = confidence;
 
         long currentDateTime = System.currentTimeMillis();
         @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("H:mm:ss:SS");
@@ -23,17 +27,18 @@ public class MessageHelper {
     }
     public MessageHelper(){
         this.message = "null";
+        this.event = false;
+        this.confidence = 0;
         long currentDateTime = System.currentTimeMillis();
         @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("H:mm:ss:SS");
         this.time = simpleDateFormat.format(currentDateTime);
     }
 
     public String getFullMessage(){
-        return String.format("sender=%s message=%s time=%s", this.sender, this.message, this.time);
+        return String.format("sender=%s message=%s event=%b confidence=%g time=%s", this.sender, this.message, this.event, this.confidence, this.time);
     }
 
     public HashMap<String, String> getMap(String input){
-        //"sender:AP2A.240905.003 msg:Message time:3:44:31:29"
         HashMap<String, String> messageMap = new HashMap<String, String>();
         if(input != null && !input.isEmpty()){
             String[] keyValuePairs = input.split(" ");
@@ -44,6 +49,8 @@ public class MessageHelper {
         } else{
             messageMap.put("sender", "system");
             messageMap.put("message", "ERROR");
+            messageMap.put("event", "ERROR");
+            messageMap.put("confidence", "ERROR");
             messageMap.put("time", "failure");
         }
         return messageMap;

@@ -50,7 +50,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView connectionStatus, messageTextView, senderTxt, messageTxt, timeTxt;
+    TextView connectionStatus, messageTextView, senderTxt, messageTxt, eventTxt, confidenceTxt, timeTxt;
     Button aSwitch, discoverButton;
     ListView listView;
     EditText typeMsg;
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
                 String bMsg;
                 JSONObject msg;
                 String finalMsg;
-                finalMsg = new MessageHelper(typeMsg.getText().toString()).getFullMessage();
+                finalMsg = new MessageHelper(typeMsg.getText().toString(), true, 1.00).getFullMessage();
                 Log.d("JSON STRING MESSAGE", finalMsg);
 
                 executor.execute(new Runnable() {
@@ -176,6 +176,8 @@ public class MainActivity extends AppCompatActivity {
 //        messageTextView = findViewById(R.id.messageTextView);
         senderTxt = findViewById(R.id.senderTxt);
         messageTxt = findViewById(R.id.messageTxt);
+        eventTxt = findViewById(R.id.eventTxt);
+        confidenceTxt = findViewById(R.id.confidenceTxt);
         timeTxt = findViewById(R.id.timeTxt);
         aSwitch = findViewById(R.id.switch1);
         discoverButton = findViewById(R.id.buttonDiscover);
@@ -385,6 +387,8 @@ public class MainActivity extends AppCompatActivity {
                                         HashMap<String, String> messageMap = helper.getMap(tempMSG);
                                         senderTxt.setText(messageMap.get("sender"));
                                         messageTxt.setText(messageMap.get("message"));
+                                        eventTxt.setText(messageMap.get("event"));
+                                        confidenceTxt.setText(messageMap.get("confidence"));
                                         timeTxt.setText(messageMap.get("time"));
                                     }
                                 });
@@ -451,6 +455,8 @@ public class MainActivity extends AppCompatActivity {
                                         HashMap<String, String> messageMap = helper.getMap(tempMSG);
                                         senderTxt.setText(messageMap.get("sender"));
                                         messageTxt.setText(messageMap.get("message"));
+                                        eventTxt.setText(messageMap.get("event"));
+                                        confidenceTxt.setText(messageMap.get("confidence"));
                                         timeTxt.setText(messageMap.get("time"));
                                     }
                                 });
