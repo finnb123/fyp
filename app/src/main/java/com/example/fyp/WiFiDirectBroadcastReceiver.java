@@ -33,6 +33,7 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
             // Respond to new connection or disconnections
             if(manager != null){
                 NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+                assert networkInfo != null;
                 if(networkInfo.isConnected()){
                     manager.requestConnectionInfo(channel, activity.connectionInfoListener);
                 }else{

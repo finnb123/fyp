@@ -1,6 +1,7 @@
 package com.example.fyp;
 
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -13,6 +14,7 @@ import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
+
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -44,13 +46,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.json.JSONObject;
+
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView connectionStatus, messageTextView, senderTxt, messageTxt, eventTxt, confidenceTxt, timeTxt;
+    TextView connectionStatus, messageTextView, senderTxt, messageTxt, eventTxt, confidenceTxt, timeTxt, peersTxt;
     Button aSwitch, discoverButton;
     ListView listView;
     EditText typeMsg;
@@ -81,6 +84,26 @@ public class MainActivity extends AppCompatActivity {
 
         initialWork();
         exqListener();
+        discoverPeers();
+    }
+
+    private void discoverPeers(){
+        if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+            requestRuntimePermission();
+        }
+        manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d("App", "Discovery Started");
+                connectionStatus.setText("Discovery Started");
+
+            }
+            @Override
+            public void onFailure(int i) {
+                Log.d("App", "Discovery Failed");
+                connectionStatus.setText("Discovery Failed");
+            }
+        });
     }
 
     private void exqListener() {
@@ -91,26 +114,28 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, 1);
             }
         });
-        discoverButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
-                    requestRuntimePermission();
-                }
-                manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        connectionStatus.setText("Discovery Started");
-                    }
-
-                    @Override
-                    public void onFailure(int i) {
-                        connectionStatus.setText("Discovery Failed");
-                    }
-                });
-            }
-        });
+//        discoverButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//
+//                if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+//                    requestRuntimePermission();
+//                }
+//                manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
+//                    @Override
+//                    public void onSuccess() {
+//                        Log.d("App", "Discovery Started");
+//                        connectionStatus.setText("Discovery Started");
+//                    }
+//
+//                    @Override
+//                    public void onFailure(int i) {
+//                        Log.d("App", "Discovery Failed");
+//                        connectionStatus.setText("Discovery Failed");
+//                    }
+//                });
+//            }
+//        });
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @SuppressLint("MissingPermission")
@@ -142,13 +167,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 ExecutorService executor = Executors.newSingleThreadExecutor();
-                long currentDateTime = System.currentTimeMillis();
-                @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("H:mm:ss:SS");
-                String currentTime = simpleDateFormat.format(currentDateTime);
-                String bMsg;
-                JSONObject msg;
                 String finalMsg;
-                finalMsg = new MessageHelper(typeMsg.getText().toString(), true, 1.00).getFullMessage();
+                finalMsg = new MessageHelper(typeMsg.getText().toString(), true, 1.00, deviceNameArray).getFullMessage();
                 Log.d("JSON STRING MESSAGE", finalMsg);
 
                 executor.execute(new Runnable() {
@@ -178,6 +198,7 @@ public class MainActivity extends AppCompatActivity {
         messageTxt = findViewById(R.id.messageTxt);
         eventTxt = findViewById(R.id.eventTxt);
         confidenceTxt = findViewById(R.id.confidenceTxt);
+        peersTxt = findViewById(R.id.peersTxt);
         timeTxt = findViewById(R.id.timeTxt);
         aSwitch = findViewById(R.id.switch1);
         discoverButton = findViewById(R.id.buttonDiscover);
@@ -185,8 +206,15 @@ public class MainActivity extends AppCompatActivity {
         typeMsg = findViewById(R.id.editTextTypeMsg);
         sendButton = findViewById(R.id.sendButton);
 
+        NotificationListener listener = new NotificationListener();
         requestRuntimePermission();
 
+        if(!hasNotificationAccess(this)){
+            openPermissions();
+        }
+
+
+        listener.onListenerConnected();
         manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         channel = manager.initialize(this, getMainLooper(), null);
         receiver = new WiFiDirectBroadcastReceiver(manager, channel, this);
@@ -199,6 +227,9 @@ public class MainActivity extends AppCompatActivity {
         if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
             requestRuntimePermission();
         }
+
+
+
         manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -214,7 +245,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestRuntimePermission(){
         if (ActivityCompat.checkSelfPermission(this, PERMISSION_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ){
-            Toast.makeText(this,"Coarse permission granted", Toast.LENGTH_LONG).show();
+            //Toast.makeText(this,"Coarse permission granted", Toast.LENGTH_LONG).show();
+            Log.d("PERMS", "Coarse Granted");
         } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, PERMISSION_COARSE_LOCATION)){
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("This app requires Coarse Location permission")
@@ -236,7 +268,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         if (ActivityCompat.checkSelfPermission(this, PERMISSION_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ){
-            Toast.makeText(this,"Fine permission granted", Toast.LENGTH_LONG).show();
+            //Toast.makeText(this,"Fine permission granted", Toast.LENGTH_LONG).show();
+            Log.d("PERMS", "Fine Granted");
         } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, PERMISSION_FINE_LOCATION)){
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("This app requires Fine Location permission")
@@ -257,7 +290,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         if (ActivityCompat.checkSelfPermission(this, PERMISSION_NEARBY_DEVICES) == PackageManager.PERMISSION_GRANTED ){
-            Toast.makeText(this,"Nearby Devices permission granted", Toast.LENGTH_LONG).show();
+            //Toast.makeText(this,"Nearby Devices permission granted", Toast.LENGTH_LONG).show();
+            Log.d("PERMS", "Nearby Devices Granted");
         } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, PERMISSION_NEARBY_DEVICES)){
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("This app requires Nearby Devices permission")
@@ -336,7 +370,26 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause(){
         super.onPause();
         unregisterReceiver(receiver);
+
+
     }
+
+//    @Override
+//    protected void onDestroy(){
+//        super.onDestroy();
+//        try{
+//            if(serverClass != null && (serverClass.serverSocket != null)){
+//                serverClass.end();
+//            }
+//            if(clientClass != null && socket != null){
+//                clientClass.end();
+//            }
+//
+//
+//        } catch (Error e) {
+//            Log.e("Socket", e.toString());
+//        }
+//    }
 
     public class ServerClass extends Thread{
         ServerSocket serverSocket;
@@ -345,17 +398,30 @@ public class MainActivity extends AppCompatActivity {
 
         public void write(byte[] bytes){
             try {
-                outputStream.write(bytes);
+                if(outputStream != null){
+                    outputStream.write(bytes);
+                }else{
+                    Log.e("Output Stream", "Output Stream is Null");
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-
+//        public void end(){
+//            try {
+//                socket.close();
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
 
         @Override
         public void run(){
             try {
-                serverSocket = new ServerSocket(8888);
+                serverSocket = new ServerSocket();
+                serverSocket.setReuseAddress(true);
+                serverSocket.bind(new InetSocketAddress(8888));
+
                 socket = serverSocket.accept();
                 inputStream = socket.getInputStream();
                 outputStream = socket.getOutputStream();
@@ -366,39 +432,50 @@ public class MainActivity extends AppCompatActivity {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Handler handler = new Handler(Looper.getMainLooper());
 
-            executor.execute(new Runnable(){
-                @Override
-                public void run(){
-                    byte[] buffer = new byte[1024];
-                    int bytes;
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        byte[] buffer = new byte[1024];
+                        int bytes;
 
-                    while(socket!=null){
-                        try {
-                            bytes = inputStream.read(buffer);
-                            if(bytes > 0){
-                                int finalBytes = bytes;
-                                handler.post(new Runnable() {
-                                    @SuppressLint("SetTextI18n")
-                                    @Override
-                                    public void run() {
-                                        String tempMSG = new String(buffer, 0, finalBytes);
-                                        Log.e("TEMP MESSAGE", tempMSG);
-                                        MessageHelper helper = new MessageHelper();
-                                        HashMap<String, String> messageMap = helper.getMap(tempMSG);
-                                        senderTxt.setText(messageMap.get("sender"));
-                                        messageTxt.setText(messageMap.get("message"));
-                                        eventTxt.setText(messageMap.get("event"));
-                                        confidenceTxt.setText(messageMap.get("confidence"));
-                                        timeTxt.setText(messageMap.get("time"));
+                        while (socket != null) {
+                            try {
+                                if(inputStream!=null){
+                                    bytes = inputStream.read(buffer);
+                                    if (bytes > 0) {
+                                        int finalBytes = bytes;
+                                        long currentTime = System.currentTimeMillis();
+                                        handler.post(new Runnable() {
+                                            @SuppressLint("SetTextI18n")
+                                            @Override
+                                            public void run() {
+                                                String tempMSG = new String(buffer, 0, finalBytes);
+                                                Log.e("TEMP MESSAGE", tempMSG);
+                                                MessageHelper helper = new MessageHelper();
+                                                HashMap<String, String> messageMap = helper.getMap(tempMSG);
+                                                senderTxt.setText(messageMap.get("sender"));
+                                                messageTxt.setText(messageMap.get("message"));
+                                                eventTxt.setText(messageMap.get("event"));
+                                                confidenceTxt.setText(messageMap.get("confidence"));
+                                                peersTxt.setText(messageMap.get("peers"));
+                                                timeTxt.setText(messageMap.get("time"));
+
+                                                String difference = Long.toString(currentTime - Long.parseLong(Objects.requireNonNull(messageMap.get("time"))));
+                                                Log.e("Time From Sent to Received", difference);
+                                            }
+                                        });
+
                                     }
-                                });
+                                }
+                            } catch (IOException e) {
+//                                throw new RuntimeException(e);
+                                Log.e("error", e.toString());
                             }
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
                         }
+
                     }
-                }
-            });
+                });
+
         }
     }
 
@@ -410,18 +487,27 @@ public class MainActivity extends AppCompatActivity {
         public ClientClass(InetAddress hostAddress){
             hostAdd = hostAddress.getHostAddress();
             socket = new Socket();
-
-
         }
 
         public void write(byte[] bytes){
             try {
-                outputStream.write(bytes);
+                if(outputStream != null){
+                    outputStream.write(bytes);
+                }else{
+                    Log.e("Output Stream", "Output Stream is Null");
+                }
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-
+//        public void end(){
+//            try {
+//                socket.close();
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
         @Override
         public void run() {
             try{
@@ -435,41 +521,69 @@ public class MainActivity extends AppCompatActivity {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Handler handler = new Handler(Looper.getMainLooper());
 
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    byte[] buffer = new byte[1024];
-                    int bytes;
 
-                    while (socket != null){
-                        try {
-                            bytes = inputStream.read(buffer);
-                            if(bytes>0){
-                                int finalBytes=bytes;
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        String tempMSG = new String(buffer, 0, finalBytes);
-                                        Log.e("TEMP MESSAGE", tempMSG);
-                                        MessageHelper helper = new MessageHelper();
-                                        HashMap<String, String> messageMap = helper.getMap(tempMSG);
-                                        senderTxt.setText(messageMap.get("sender"));
-                                        messageTxt.setText(messageMap.get("message"));
-                                        eventTxt.setText(messageMap.get("event"));
-                                        confidenceTxt.setText(messageMap.get("confidence"));
-                                        timeTxt.setText(messageMap.get("time"));
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        byte[] buffer = new byte[1024];
+                        int bytes;
+
+                        while (socket != null) {
+                            try {
+                                if(inputStream!=null){
+                                    bytes = inputStream.read(buffer);
+                                    if (bytes > 0) {
+                                        int finalBytes = bytes;
+                                        long currentTime = System.currentTimeMillis();
+                                        handler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                String tempMSG = new String(buffer, 0, finalBytes);
+                                                Log.e("TEMP MESSAGE", tempMSG);
+                                                MessageHelper helper = new MessageHelper();
+                                                HashMap<String, String> messageMap = helper.getMap(tempMSG);
+                                                senderTxt.setText(messageMap.get("sender"));
+                                                messageTxt.setText(messageMap.get("message"));
+                                                eventTxt.setText(messageMap.get("event"));
+                                                confidenceTxt.setText(messageMap.get("confidence"));
+                                                peersTxt.setText(messageMap.get("peers"));
+                                                timeTxt.setText(messageMap.get("time"));
+
+                                                String difference = Long.toString(currentTime - Long.parseLong(Objects.requireNonNull(messageMap.get("time"))));
+                                                Log.e("Time From Sent to Received", difference);
+                                            }
+                                        });
                                     }
-                                });
+                                }
+                            } catch (IOException e) {
+//                            throw new RuntimeException(e);
+                                Log.d("Error", e.toString());
                             }
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
                         }
                     }
-                }
-            });
+                });
+
+
 
 
         }
     }
+
+    public boolean hasNotificationAccess(Context context){
+        return Settings.Secure.getString(
+                context.getApplicationContext().getContentResolver(),
+                "enabled_notification_listeners"
+        ).contains(context.getApplicationContext().getPackageName());
+    }
+
+    public void openPermissions(){
+        try{
+            Intent settingsIntent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+            startActivity(settingsIntent);
+        } catch (ActivityNotFoundException e){
+            Log.d("error", e.toString());
+        }
+    }
+
 
 }
