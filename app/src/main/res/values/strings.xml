@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">fyp</string>
+    <string name="channel_name">fyp_channel</string>
+    <string name="channel_description">Allows for full screen notifications\n</string>
 </resources>

@@ -1,6 +1,8 @@
 package com.example.fyp;
 
 import android.annotation.SuppressLint;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,6 +15,7 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Build;
 import android.os.Bundle;
 
 
@@ -71,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
     ClientClass clientClass;
     boolean isHost;
 
+    private static final String MAIN_CHANNEL_ID = "fyp_main_notification";
+
     private static final String PERMISSION_COARSE_LOCATION = android.Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final String PERMISSION_FINE_LOCATION = android.Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String PERMISSION_NEARBY_DEVICES = android.Manifest.permission.NEARBY_WIFI_DEVICES;
@@ -100,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
             }
             @Override
             public void onFailure(int i) {
-                Log.d("App", "Discovery Failed");
+                Log.d("App", "Discovery Failed: " + i);
                 connectionStatus.setText("Discovery Failed");
             }
         });
@@ -114,28 +119,29 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, 1);
             }
         });
-//        discoverButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//
-//                if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
-//                    requestRuntimePermission();
-//                }
-//                manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
-//                    @Override
-//                    public void onSuccess() {
-//                        Log.d("App", "Discovery Started");
-//                        connectionStatus.setText("Discovery Started");
-//                    }
-//
-//                    @Override
-//                    public void onFailure(int i) {
-//                        Log.d("App", "Discovery Failed");
-//                        connectionStatus.setText("Discovery Failed");
-//                    }
-//                });
-//            }
-//        });
+
+        discoverButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+                    requestRuntimePermission();
+                }
+                manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Log.d("App", "Discovery Started");
+                        connectionStatus.setText("Discovery Started");
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+                        Log.d("App", "Discovery Failed: " + i);
+                        connectionStatus.setText("Discovery Failed");
+                    }
+                });
+            }
+        });
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @SuppressLint("MissingPermission")
@@ -228,8 +234,6 @@ public class MainActivity extends AppCompatActivity {
             requestRuntimePermission();
         }
 
-
-
         manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -242,6 +246,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+
 
     private void requestRuntimePermission(){
         if (ActivityCompat.checkSelfPermission(this, PERMISSION_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ){
