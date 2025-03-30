@@ -13,7 +13,7 @@
         android:layout_marginTop="25dp"
         android:layout_height="34dp"
         android:background="#A2F34C"
-        android:text="Connection Status"
+        android:text="@string/connection_status"
         android:textAlignment="center"
         android:textColor="@color/design_default_color_secondary_variant" />
 
@@ -24,17 +24,12 @@
         android:orientation="horizontal"
         >
         <Button
-            android:id="@+id/switch1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="20dp"
-            android:text="ON/OFF" />
-        <Button
             android:id="@+id/buttonDiscover"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="40dp"
-            android:text="DISCOVER" />
+            android:layout_marginStart="40dp"
+            android:layout_marginEnd="40dp"
+            android:text="@string/discover_button" />
 
     </LinearLayout>
     <LinearLayout
@@ -54,14 +49,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
-            android:text="Sender"
+            android:text="@string/sender"
             android:textAlignment="center" />
         <TextView
             android:id="@+id/messageTxt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
-            android:text="Message"
+            android:text="@string/message"
             android:textAlignment="center" />
 
         <TextView
@@ -69,7 +64,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
-            android:text="Event?"
+            android:text="@string/event"
             android:textAlignment="center" />
 
 
@@ -78,7 +73,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
-            android:text="Confidence"
+            android:text="@string/confidence"
             android:textAlignment="center" />
 
         <TextView
@@ -86,7 +81,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
-            android:text="Peers"
+            android:text="@string/peers"
             android:textAlignment="center" />
 
         <TextView
@@ -94,7 +89,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
-            android:text="Time"
+            android:text="@string/time"
             android:textAlignment="center" />
     </LinearLayout>
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -106,9 +101,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="44dp"
+            android:autofillHints="message"
             android:ems="10"
             android:inputType="textPersonName"
-            android:text="Message"
+            android:text="@string/message"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/sendButton"
             app:layout_constraintHorizontal_bias="0.0"
@@ -118,6 +114,7 @@
             android:id="@+id/sendButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/send_button"
             app:layout_constraintBottom_toBottomOf="@+id/editTextTypeMsg"
             app:layout_constraintEnd_toEndOf="parent"
             app:srcCompat="@android:drawable/ic_menu_send" />

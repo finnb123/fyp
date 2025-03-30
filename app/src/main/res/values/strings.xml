@@ -2,4 +2,19 @@
     <string name="app_name">fyp</string>
     <string name="channel_name">fyp_channel</string>
     <string name="channel_description">Allows for full screen notifications\n</string>
+    <string name="not_connected">Not Connected</string>
+    <string name="discovery_started">Discovery Started</string>
+    <string name="discovery_failed">Discovery Failed</string>
+    <string name="peer_list_empty">Peer List Empty</string>
+    <string name="discover_button">DISCOVER</string>
+    <string name="connection_status">Connection Status</string>
+    <string name="sender">Sender</string>
+    <string name="message">Message</string>
+    <string name="event">Event?</string>
+    <string name="confidence">Confidence</string>
+    <string name="peers">Peers</string>
+    <string name="time">Time</string>
+    <string name="send_button">Send Button</string>
+    <string name="host">Host</string>
+    <string name="client">Client</string>
 </resources>

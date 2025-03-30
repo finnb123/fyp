@@ -11,7 +11,6 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
-    <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
@@ -31,7 +30,10 @@
         tools:targetApi="34">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -1,8 +1,6 @@
 package com.example.fyp;
 
 import android.annotation.SuppressLint;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -15,7 +13,6 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.os.Build;
 import android.os.Bundle;
 
 
@@ -92,111 +89,6 @@ public class MainActivity extends AppCompatActivity {
         discoverPeers();
     }
 
-    private void discoverPeers(){
-        if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
-            requestRuntimePermission();
-        }
-        manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                Log.d("App", "Discovery Started");
-                connectionStatus.setText("Discovery Started");
-
-            }
-            @Override
-            public void onFailure(int i) {
-                Log.d("App", "Discovery Failed: " + i);
-                connectionStatus.setText("Discovery Failed");
-            }
-        });
-    }
-
-    private void exqListener() {
-        aSwitch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
-                startActivityForResult(intent, 1);
-            }
-        });
-
-        discoverButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
-                    requestRuntimePermission();
-                }
-                manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        Log.d("App", "Discovery Started");
-                        connectionStatus.setText("Discovery Started");
-                    }
-
-                    @Override
-                    public void onFailure(int i) {
-                        Log.d("App", "Discovery Failed: " + i);
-                        connectionStatus.setText("Discovery Failed");
-                    }
-                });
-            }
-        });
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @SuppressLint("MissingPermission")
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                final WifiP2pDevice device = deviceArray[i];
-                WifiP2pConfig config = new WifiP2pConfig();
-                config.deviceAddress = device.deviceAddress;
-                manager.connect(channel, config, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        connectionStatus.setText("Connected: " + device.deviceAddress);
-                        long currentDateTime = System.currentTimeMillis();
-                        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("H:mm:ss:SS");
-                        String currentTime = simpleDateFormat.format(currentDateTime);
-                        Toast.makeText(MainActivity.this, currentTime, Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onFailure(int i) {
-                        connectionStatus.setText("Not Connected");
-
-                    }
-                });
-            }
-        });
-
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ExecutorService executor = Executors.newSingleThreadExecutor();
-                String finalMsg;
-                finalMsg = new MessageHelper(typeMsg.getText().toString(), true, 1.00, deviceNameArray).getFullMessage();
-                Log.d("JSON STRING MESSAGE", finalMsg);
-
-                executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(peers.isEmpty()){
-                            //Toast.makeText(MainActivity.this, "No Connection", Toast.LENGTH_SHORT).show();
-                            messageTextView.setText("No Devices Connected");
-                            return;
-                        }
-                        else if(isHost){
-                            serverClass.write(finalMsg.getBytes());
-                        }else{
-                            clientClass.write(finalMsg.getBytes());
-                        }
-                    }
-                });
-            }
-        });
-
-    }
-
     private void initialWork() {
         connectionStatus = findViewById(R.id.connection_status);
 //        messageTextView = findViewById(R.id.messageTextView);
@@ -206,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
         confidenceTxt = findViewById(R.id.confidenceTxt);
         peersTxt = findViewById(R.id.peersTxt);
         timeTxt = findViewById(R.id.timeTxt);
-        aSwitch = findViewById(R.id.switch1);
         discoverButton = findViewById(R.id.buttonDiscover);
         listView = findViewById(R.id.listView);
         typeMsg = findViewById(R.id.editTextTypeMsg);
@@ -229,26 +120,106 @@ public class MainActivity extends AppCompatActivity {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        discoverPeers();
+    }
 
+
+    private void discoverPeers(){
         if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
             requestRuntimePermission();
         }
-
         manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                connectionStatus.setText("Discovery Started");
-            }
+                Log.d("Discovery", "Discovery Started");
+                connectionStatus.setText(R.string.discovery_started);
 
+            }
             @Override
             public void onFailure(int i) {
-                connectionStatus.setText("Discovery Failed");
+                Log.d("Discovery", "Discovery Failed: " + i);
+                connectionStatus.setText(R.string.discovery_failed);
             }
         });
     }
 
+    private void exqListener() {
+//        aSwitch.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
+//                startActivityForResult(intent, 1);
+//            }
+//        });
 
+        discoverButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                discoverPeers();
+            }
+        });
 
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @SuppressLint("MissingPermission")
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                final WifiP2pDevice device = deviceArray[i];
+                WifiP2pConfig config = new WifiP2pConfig();
+                config.deviceAddress = device.deviceAddress;
+                manager.connect(channel, config, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        connectionStatus.setText(String.format("Connected: %s", device.deviceAddress));
+                        long currentDateTime = System.currentTimeMillis();
+                        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("H:mm:ss:SS");
+                        String currentTime = simpleDateFormat.format(currentDateTime);
+                        Toast.makeText(MainActivity.this, currentTime, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+                        connectionStatus.setText(R.string.not_connected);
+                        Log.e("List View", String.valueOf(i));
+                    }
+                });
+            }
+        });
+
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+                String finalMsg;
+                finalMsg = new MessageHelper(typeMsg.getText().toString(), true, 1.00, deviceNameArray).getFullMessage();
+                Log.d("JSON STRING MESSAGE", finalMsg);
+
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(peers.isEmpty()){
+                            messageTextView.setText(R.string.peer_list_empty);
+
+                        }
+                        else if(isHost){
+                            serverClass.write(finalMsg.getBytes());
+                        }else{
+                            clientClass.write(finalMsg.getBytes());
+                        }
+                    }
+                });
+            }
+        });
+
+    }
+
+    public void openPermissions(){
+        try{
+            Intent settingsIntent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+            startActivity(settingsIntent);
+        } catch (ActivityNotFoundException e){
+            Log.d("error", e.toString());
+        }
+    }
     private void requestRuntimePermission(){
         if (ActivityCompat.checkSelfPermission(this, PERMISSION_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ){
             //Toast.makeText(this,"Coarse permission granted", Toast.LENGTH_LONG).show();
@@ -339,8 +310,7 @@ public class MainActivity extends AppCompatActivity {
                 listView.setAdapter(adapter);
 
                 if(peers.isEmpty()){
-                    connectionStatus.setText("No devices found");
-                    return;
+                    connectionStatus.setText(R.string.peer_list_empty);
                 }
             }
         }
@@ -351,12 +321,12 @@ public class MainActivity extends AppCompatActivity {
         public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
             final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
             if(wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner){
-                connectionStatus.setText("Host");
+                connectionStatus.setText(R.string.host);
                 isHost = true;
                 serverClass = new ServerClass();
                 serverClass.start();
             }else if (wifiP2pInfo.groupFormed){
-                connectionStatus.setText("Client");
+                connectionStatus.setText(R.string.client);
                 isHost = false;
                 clientClass = new ClientClass(groupOwnerAddress);
                 clientClass.start();
@@ -369,7 +339,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         registerReceiver(receiver, intentFilter);
-
     }
 
     @Override
@@ -521,7 +490,7 @@ public class MainActivity extends AppCompatActivity {
                 inputStream = socket.getInputStream();
                 outputStream = socket.getOutputStream();
             } catch (IOException e){
-                e.printStackTrace();
+                Log.e("Client", e.toString());
             }
 
             ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -582,14 +551,7 @@ public class MainActivity extends AppCompatActivity {
         ).contains(context.getApplicationContext().getPackageName());
     }
 
-    public void openPermissions(){
-        try{
-            Intent settingsIntent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
-            startActivity(settingsIntent);
-        } catch (ActivityNotFoundException e){
-            Log.d("error", e.toString());
-        }
-    }
+
 
 
 }

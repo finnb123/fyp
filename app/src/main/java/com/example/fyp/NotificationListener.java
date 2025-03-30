@@ -47,21 +47,20 @@ public class NotificationListener extends NotificationListenerService {
 //                    Intent launchIntent = getPackageManager().getLaunchIntentForPackage("com.example.fyp");
                     try{
                         Intent fullScreenIntent = new Intent(context, MainActivity.class);
-                        PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(context, 0, fullScreenIntent, PendingIntent.FLAG_IMMUTABLE);
-
-                        Intent openAppIntent = new Intent(context, MainActivity.class);
-                        openAppIntent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_BROUGHT_TO_FRONT);
-                        PendingIntent pendingOpenAppIntent = PendingIntent.getActivity(this,0, openAppIntent, PendingIntent.FLAG_IMMUTABLE);
+                        PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(context, 0, fullScreenIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT );
+//                        Intent openAppIntent = new Intent(context, MainActivity.class);
+//                        openAppIntent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+//                        PendingIntent pendingOpenAppIntent = PendingIntent.getActivity(this,0, openAppIntent, PendingIntent.FLAG_IMMUTABLE);
 
                         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, MAIN_CHANNEL_ID)
                                 .setSmallIcon(R.mipmap.ic_launcher_round)
                                 .setContentTitle("Shooting Detected")
                                 .setContentText("Click to start network discovery")
                                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                                .setFullScreenIntent(fullScreenPendingIntent, true)
-                                .setContentIntent(pendingOpenAppIntent)
+//                                .setContentIntent(pendingOpenAppIntent)
                                 .setAutoCancel(true)
-                                .setCategory(NotificationCompat.CATEGORY_EVENT);
+                                .setCategory(NotificationCompat.CATEGORY_EVENT)
+                                .setFullScreenIntent(fullScreenPendingIntent, true);
 
                         NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
                         int NOTIFICATION_ID = 1;
