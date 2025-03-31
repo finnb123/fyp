@@ -363,6 +363,7 @@ public class MainActivity extends AppCompatActivity {
 
                 ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, deviceNameArray);
                 listView.setAdapter(adapter);
+                createGroup();
             }
             if(peers.isEmpty()){
                 Log.d("Peer List", "No devices found");
