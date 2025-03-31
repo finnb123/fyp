@@ -53,7 +53,8 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView connectionStatus, messageTextView, senderTxt, messageTxt, eventTxt, confidenceTxt, timeTxt, peersTxt;
+    TextView connectionStatus, messageTextView, senderTxt, messageTxt, confidenceTxt, timeTxt, peersTxt;
+    TextView eventTxt;
     Button aSwitch, discoverButton;
     ListView listView;
     EditText typeMsg;
@@ -86,15 +87,27 @@ public class MainActivity extends AppCompatActivity {
 
         initialWork();
         exqListener();
+
         discoverPeers();
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(receiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        unregisterReceiver(receiver);
     }
 
     private void initialWork() {
         connectionStatus = findViewById(R.id.connection_status);
-//        messageTextView = findViewById(R.id.messageTextView);
         senderTxt = findViewById(R.id.senderTxt);
         messageTxt = findViewById(R.id.messageTxt);
-        eventTxt = findViewById(R.id.eventTxt);
         confidenceTxt = findViewById(R.id.confidenceTxt);
         peersTxt = findViewById(R.id.peersTxt);
         timeTxt = findViewById(R.id.timeTxt);
@@ -120,12 +133,14 @@ public class MainActivity extends AppCompatActivity {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        discoverPeers();
     }
 
 
     private void discoverPeers(){
-        if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(MainActivity.this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission(MainActivity.this,
+                android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
             requestRuntimePermission();
         }
         manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
@@ -133,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
             public void onSuccess() {
                 Log.d("Discovery", "Discovery Started");
                 connectionStatus.setText(R.string.discovery_started);
-
             }
             @Override
             public void onFailure(int i) {
@@ -142,6 +156,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void createGroup(){
+        WifiP2pConfig config = new WifiP2pConfig();
+        for (WifiP2pDevice device : deviceArray){
+            config.deviceAddress = device.deviceAddress;
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            manager.connect(channel, config, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    Log.d("Peer Group", String.format("Connected to: %s", device.deviceAddress));
+                }
+                @Override
+                public void onFailure(int i) {
+                    Log.d("Peer Group", String.format("Error with: %s\nError is: %d", device.deviceAddress, i));
+                }
+            });
+        }
+    }
+
 
     private void exqListener() {
 //        aSwitch.setOnClickListener(new View.OnClickListener() {
@@ -190,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 String finalMsg;
-                finalMsg = new MessageHelper(typeMsg.getText().toString(), true, 1.00, deviceNameArray).getFullMessage();
+                finalMsg = new MessageHelper(typeMsg.getText().toString(), 1.00, deviceNameArray).getFullMessage();
                 Log.d("JSON STRING MESSAGE", finalMsg);
 
                 executor.execute(new Runnable() {
@@ -198,7 +233,6 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         if(peers.isEmpty()){
                             messageTextView.setText(R.string.peer_list_empty);
-
                         }
                         else if(isHost){
                             serverClass.write(finalMsg.getBytes());
@@ -291,27 +325,48 @@ public class MainActivity extends AppCompatActivity {
 
     WifiP2pManager.PeerListListener peerListListener = new WifiP2pManager.PeerListListener() {
         @Override
-        public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
-            if(!wifiP2pDeviceList.equals(peers)){
+        public void onPeersAvailable(WifiP2pDeviceList peerList) {
+//            if(!wifiP2pDeviceList.equals(peers)){
+//                peers.clear();
+//                peers.addAll(wifiP2pDeviceList.getDeviceList());
+//
+//                deviceNameArray = new String[wifiP2pDeviceList.getDeviceList().size()];
+//                deviceArray = new WifiP2pDevice[wifiP2pDeviceList.getDeviceList().size()];
+//
+//                int index = 0;
+//                for(WifiP2pDevice device: wifiP2pDeviceList.getDeviceList()){
+//                    deviceNameArray[index] = device.deviceName;
+//                    deviceArray[index] = device;
+//                    index++;
+//                }
+//
+//                ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, deviceNameArray);
+//                listView.setAdapter(adapter);
+//
+//                if(peers.isEmpty()){
+//                    connectionStatus.setText(R.string.peer_list_empty);
+//                }
+//            }
+            List<WifiP2pDevice> refreshedPeers = new ArrayList<>(peerList.getDeviceList());
+            if(!refreshedPeers.equals(peers)){
                 peers.clear();
-                peers.addAll(wifiP2pDeviceList.getDeviceList());
-
-                deviceNameArray = new String[wifiP2pDeviceList.getDeviceList().size()];
-                deviceArray = new WifiP2pDevice[wifiP2pDeviceList.getDeviceList().size()];
+                peers.addAll(refreshedPeers);
+                deviceNameArray = new String[peerList.getDeviceList().size()];
+                deviceArray = new WifiP2pDevice[peerList.getDeviceList().size()];
 
                 int index = 0;
-                for(WifiP2pDevice device: wifiP2pDeviceList.getDeviceList()){
-                    deviceNameArray[index] = device.deviceName;
-                    deviceArray[index] = device;
-                    index++;
+                for(WifiP2pDevice device: peerList.getDeviceList()){
+                        deviceNameArray[index] = device.deviceName;
+                        deviceArray[index] = device;
+                        index++;
                 }
 
                 ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, deviceNameArray);
                 listView.setAdapter(adapter);
-
-                if(peers.isEmpty()){
-                    connectionStatus.setText(R.string.peer_list_empty);
-                }
+            }
+            if(peers.isEmpty()){
+                Log.d("Peer List", "No devices found");
+                connectionStatus.setText(R.string.peer_list_empty);
             }
         }
     };
@@ -325,29 +380,21 @@ public class MainActivity extends AppCompatActivity {
                 isHost = true;
                 serverClass = new ServerClass();
                 serverClass.start();
+//                String finalMsg = new MessageHelper("We are now connected....", true, 1.00, deviceNameArray).getFullMessage();
+//                serverClass.write(finalMsg.getBytes());
             }else if (wifiP2pInfo.groupFormed){
                 connectionStatus.setText(R.string.client);
                 isHost = false;
                 clientClass = new ClientClass(groupOwnerAddress);
                 clientClass.start();
+//                String finalMsg = new MessageHelper("We are now connected....", true, 1.00, deviceNameArray).getFullMessage();
+//                clientClass.write(finalMsg.getBytes());
             }
         }
     };
 
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(receiver, intentFilter);
-    }
 
-    @Override
-    protected void onPause(){
-        super.onPause();
-        unregisterReceiver(receiver);
-
-
-    }
 
 //    @Override
 //    protected void onDestroy(){
@@ -430,7 +477,6 @@ public class MainActivity extends AppCompatActivity {
                                                 HashMap<String, String> messageMap = helper.getMap(tempMSG);
                                                 senderTxt.setText(messageMap.get("sender"));
                                                 messageTxt.setText(messageMap.get("message"));
-                                                eventTxt.setText(messageMap.get("event"));
                                                 confidenceTxt.setText(messageMap.get("confidence"));
                                                 peersTxt.setText(messageMap.get("peers"));
                                                 timeTxt.setText(messageMap.get("time"));
@@ -519,7 +565,6 @@ public class MainActivity extends AppCompatActivity {
                                                 HashMap<String, String> messageMap = helper.getMap(tempMSG);
                                                 senderTxt.setText(messageMap.get("sender"));
                                                 messageTxt.setText(messageMap.get("message"));
-                                                eventTxt.setText(messageMap.get("event"));
                                                 confidenceTxt.setText(messageMap.get("confidence"));
                                                 peersTxt.setText(messageMap.get("peers"));
                                                 timeTxt.setText(messageMap.get("time"));
@@ -531,7 +576,6 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 }
                             } catch (IOException e) {
-//                            throw new RuntimeException(e);
                                 Log.d("Error", e.toString());
                             }
                         }
