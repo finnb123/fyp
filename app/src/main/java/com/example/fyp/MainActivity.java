@@ -77,10 +77,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String MAIN_CHANNEL_ID = "fyp_main_notification";
     private static final int PERMISSION_REQUEST_CODE = 2;
     final String[] PERMISSIONS = {
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.NEARBY_WIFI_DEVICES,
-            Manifest.permission.POST_NOTIFICATIONS
+            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.NEARBY_WIFI_DEVICES,
+            android.Manifest.permission.POST_NOTIFICATIONS
     };
 
     @Override
@@ -139,9 +139,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void discoverPeers(){
         if (ActivityCompat.checkSelfPermission(MainActivity.this,
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 || ActivityCompat.checkSelfPermission(MainActivity.this,
-                Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+               android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
             requestRuntimePermission();
         }
         manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
