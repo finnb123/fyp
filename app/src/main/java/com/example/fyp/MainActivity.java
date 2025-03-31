@@ -49,6 +49,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -217,22 +218,27 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 ExecutorService executor = Executors.newSingleThreadExecutor();
-                String finalMsg;
-                finalMsg = new MessageHelper(typeMsg.getText().toString(), 1.00, deviceNameArray).getFullMessage();
-                Log.d("JSON STRING MESSAGE", finalMsg);
-
+//                finalMsg = new MessageHelper(typeMsg.getText().toString(), 1.00, deviceNameArray).getFullMessage();
+                //finalMsg = new MessageHelper(String.format("We are now connected... I am the %s",), 1.00, deviceNameArray).getFullMessage();
+                //Log.d("JSON STRING MESSAGE", finalMsg);
+                Random rng = new Random();
+                double confidence = rng.nextDouble();
                 executor.execute(new Runnable() {
+                    String finalMsg;
                     @Override
                     public void run() {
+
                         if(peers.isEmpty()){
                             messageTextView.setText(R.string.peer_list_empty);
                         }
                         else if(isHost){
                             if(serverClass!=null){
+                                finalMsg = new MessageHelper("We are now connected... I am the host", confidence, deviceNameArray).getFullMessage();
                                 serverClass.write(finalMsg.getBytes());
                             }
                         }else{
                             if(clientClass!=null){
+                                finalMsg = new MessageHelper("We are now connected... I am a client", confidence, deviceNameArray).getFullMessage();
                                 clientClass.write(finalMsg.getBytes());
                             }
                         }
