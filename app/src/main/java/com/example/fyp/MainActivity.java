@@ -1,5 +1,6 @@
 package com.example.fyp;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -44,6 +45,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -73,11 +75,13 @@ public class MainActivity extends AppCompatActivity {
     boolean isHost;
 
     private static final String MAIN_CHANNEL_ID = "fyp_main_notification";
-
-    private static final String PERMISSION_COARSE_LOCATION = android.Manifest.permission.ACCESS_COARSE_LOCATION;
-    private static final String PERMISSION_FINE_LOCATION = android.Manifest.permission.ACCESS_FINE_LOCATION;
-    private static final String PERMISSION_NEARBY_DEVICES = android.Manifest.permission.NEARBY_WIFI_DEVICES;
     private static final int PERMISSION_REQUEST_CODE = 2;
+    final String[] PERMISSIONS = {
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.NEARBY_WIFI_DEVICES,
+            Manifest.permission.POST_NOTIFICATIONS
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,10 +90,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         initialWork();
+
         exqListener();
 
         discoverPeers();
-
     }
 
     @Override
@@ -115,32 +119,29 @@ public class MainActivity extends AppCompatActivity {
         listView = findViewById(R.id.listView);
         typeMsg = findViewById(R.id.editTextTypeMsg);
         sendButton = findViewById(R.id.sendButton);
-
         NotificationListener listener = new NotificationListener();
         requestRuntimePermission();
 
         if(!hasNotificationAccess(this)){
             openPermissions();
         }
-
-
         listener.onListenerConnected();
         manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         channel = manager.initialize(this, getMainLooper(), null);
         receiver = new WiFiDirectBroadcastReceiver(manager, channel, this);
-
         intentFilter = new IntentFilter();
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+
     }
 
 
     private void discoverPeers(){
         if (ActivityCompat.checkSelfPermission(MainActivity.this,
-                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 || ActivityCompat.checkSelfPermission(MainActivity.this,
-                android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+                Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
             requestRuntimePermission();
         }
         manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
@@ -161,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         WifiP2pConfig config = new WifiP2pConfig();
         for (WifiP2pDevice device : deviceArray){
             config.deviceAddress = device.deviceAddress;
-            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
             manager.connect(channel, config, new WifiP2pManager.ActionListener() {
@@ -255,70 +256,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void requestRuntimePermission(){
-        if (ActivityCompat.checkSelfPermission(this, PERMISSION_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ){
-            //Toast.makeText(this,"Coarse permission granted", Toast.LENGTH_LONG).show();
-            Log.d("PERMS", "Coarse Granted");
-        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, PERMISSION_COARSE_LOCATION)){
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("This app requires Coarse Location permission")
-                    .setTitle("Permission Required")
-                    .setCancelable(false)
-                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            ActivityCompat.requestPermissions(MainActivity.this, new String[] {PERMISSION_COARSE_LOCATION}, PERMISSION_REQUEST_CODE);
-                        }
-                    })
-                    .setNegativeButton("Cancel", ((dialog, which)-> dialog.dismiss()));
-
-            builder.show();
-        } else {
-            ActivityCompat.requestPermissions(this, new String[] {PERMISSION_COARSE_LOCATION, //PERMISSION_NEARBY_DEVICES
-                     }, PERMISSION_REQUEST_CODE);
+        int i = 0;
+        ArrayList<String> perms = new ArrayList<String>();
+        for(String perm: PERMISSIONS){
+            if(ActivityCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED){
+                perms.add(perm);
+            }
         }
 
-
-        if (ActivityCompat.checkSelfPermission(this, PERMISSION_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ){
-            //Toast.makeText(this,"Fine permission granted", Toast.LENGTH_LONG).show();
-            Log.d("PERMS", "Fine Granted");
-        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, PERMISSION_FINE_LOCATION)){
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("This app requires Fine Location permission")
-                    .setTitle("Permission Required")
-                    .setCancelable(false)
-                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            ActivityCompat.requestPermissions(MainActivity.this, new String[] {PERMISSION_FINE_LOCATION}, PERMISSION_REQUEST_CODE+1);
-                        }
-                    })
-                    .setNegativeButton("Cancel", ((dialog, which)-> dialog.dismiss()));
-
-            builder.show();
-        } else {
-            ActivityCompat.requestPermissions(this, new String[] {PERMISSION_FINE_LOCATION}, PERMISSION_REQUEST_CODE+1);
-        }
-
-
-        if (ActivityCompat.checkSelfPermission(this, PERMISSION_NEARBY_DEVICES) == PackageManager.PERMISSION_GRANTED ){
-            //Toast.makeText(this,"Nearby Devices permission granted", Toast.LENGTH_LONG).show();
-            Log.d("PERMS", "Nearby Devices Granted");
-        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, PERMISSION_NEARBY_DEVICES)){
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("This app requires Nearby Devices permission")
-                    .setTitle("Permission Required")
-                    .setCancelable(false)
-                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            ActivityCompat.requestPermissions(MainActivity.this, new String[] {PERMISSION_NEARBY_DEVICES}, PERMISSION_REQUEST_CODE+2);
-                        }
-                    })
-                    .setNegativeButton("Cancel", ((dialog, which)-> dialog.dismiss()));
-
-            builder.show();
-        } else {
-            ActivityCompat.requestPermissions(this, new String[] {PERMISSION_NEARBY_DEVICES}, PERMISSION_REQUEST_CODE+5);
+        String[] not_allowed = new String[perms.size()];
+        perms.toArray(not_allowed);
+        if(not_allowed.length >= 1){
+            Log.d("Permissions", Arrays.toString(not_allowed));
+            ActivityCompat.requestPermissions(this, not_allowed, PERMISSION_REQUEST_CODE );
         }
     }
 
