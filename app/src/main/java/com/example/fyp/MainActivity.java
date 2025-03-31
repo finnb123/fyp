@@ -180,14 +180,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void exqListener() {
-//        aSwitch.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
-//                startActivityForResult(intent, 1);
-//            }
-//        });
-
         discoverButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -236,9 +228,13 @@ public class MainActivity extends AppCompatActivity {
                             messageTextView.setText(R.string.peer_list_empty);
                         }
                         else if(isHost){
-                            serverClass.write(finalMsg.getBytes());
+                            if(serverClass!=null){
+                                serverClass.write(finalMsg.getBytes());
+                            }
                         }else{
-                            clientClass.write(finalMsg.getBytes());
+                            if(clientClass!=null){
+                                clientClass.write(finalMsg.getBytes());
+                            }
                         }
                     }
                 });
@@ -318,6 +314,7 @@ public class MainActivity extends AppCompatActivity {
             if(peers.isEmpty()){
                 Log.d("Peer List", "No devices found");
                 connectionStatus.setText(R.string.peer_list_empty);
+                discoverPeers();
             }
         }
     };
@@ -331,15 +328,11 @@ public class MainActivity extends AppCompatActivity {
                 isHost = true;
                 serverClass = new ServerClass();
                 serverClass.start();
-//                String finalMsg = new MessageHelper("We are now connected....", true, 1.00, deviceNameArray).getFullMessage();
-//                serverClass.write(finalMsg.getBytes());
             }else if (wifiP2pInfo.groupFormed){
                 connectionStatus.setText(R.string.client);
                 isHost = false;
                 clientClass = new ClientClass(groupOwnerAddress);
                 clientClass.start();
-//                String finalMsg = new MessageHelper("We are now connected....", true, 1.00, deviceNameArray).getFullMessage();
-//                clientClass.write(finalMsg.getBytes());
             }
         }
     };
