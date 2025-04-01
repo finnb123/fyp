@@ -57,9 +57,8 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity {
 
     TextView connectionStatus, messageTextView, senderTxt, messageTxt, confidenceTxt, timeTxt, peersTxt;
-    TextView eventTxt;
-    Button aSwitch, discoverButton;
-    ListView listView;
+    Button discoverButton;
+    //ListView listView;
     EditText typeMsg;
     ImageButton sendButton;
 
@@ -118,8 +117,8 @@ public class MainActivity extends AppCompatActivity {
         peersTxt = findViewById(R.id.peersTxt);
         timeTxt = findViewById(R.id.timeTxt);
         discoverButton = findViewById(R.id.buttonDiscover);
-        listView = findViewById(R.id.listView);
-        typeMsg = findViewById(R.id.editTextTypeMsg);
+        //listView = findViewById(R.id.listView);
+        //typeMsg = findViewById(R.id.editTextTypeMsg);
         sendButton = findViewById(R.id.sendButton);
         NotificationListener listener = new NotificationListener();
         requestRuntimePermission();
@@ -163,26 +162,29 @@ public class MainActivity extends AppCompatActivity {
     private void createGroup(){
         WifiP2pConfig config = new WifiP2pConfig();
         Log.d("Create Group", Arrays.toString(deviceArray));
-        if(deviceArray!=null && deviceArray[0] != null){
+        if(deviceArray.length > 0){
+            if(deviceArray[0] != null) {
 //            for (WifiP2pDevice device : deviceArray){
-            WifiP2pDevice device = deviceArray[0];
-            config.deviceAddress = device.deviceAddress;
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
-                return;
+                WifiP2pDevice device = deviceArray[0];
+                config.deviceAddress = device.deviceAddress;
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                manager.connect(channel, config, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        //Log.d("Peer Group", String.format("Group formed with: %s", device.deviceAddress));
+                        //connectionStatus.setText("Group Formed");
+                        Log.d("Peer Group", "Create Group Success");
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+                        //Log.d("Peer Group", String.format("Error with: %s\nError is: %d", device.deviceAddress, i));
+                        Log.d("Peer Group", "Issue connecting: " + i);
+                    }
+                });
             }
-            manager.connect(channel, config, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onSuccess() {
-                    //Log.d("Peer Group", String.format("Group formed with: %s", device.deviceAddress));
-                    //connectionStatus.setText("Group Formed");
-                    Log.d("Peer Group", "Create Group Success");
-                }
-                @Override
-                public void onFailure(int i) {
-                    //Log.d("Peer Group", String.format("Error with: %s\nError is: %d", device.deviceAddress, i));
-                    Log.d("Peer Group", "Issue connecting: " + i);
-                }
-            });
         }
         //}
 
@@ -454,11 +456,12 @@ public class MainActivity extends AppCompatActivity {
                                                 Log.e("TEMP MESSAGE", tempMSG);
                                                 MessageHelper helper = new MessageHelper();
                                                 HashMap<String, String> messageMap = helper.getMap(tempMSG);
-                                                senderTxt.setText(messageMap.get("sender"));
-                                                messageTxt.setText(messageMap.get("message"));
-                                                confidenceTxt.setText(messageMap.get("confidence"));
-                                                peersTxt.setText(messageMap.get("peers"));
-                                                timeTxt.setText(messageMap.get("time"));
+                                                senderTxt.setText(String.format("Sender: %s",messageMap.get("sender")));
+                                                messageTxt.setText(String.format("Message: %s", messageMap.get("message")));
+                                                confidenceTxt.setText(String.format("Confidence: %s", messageMap.get("confidence")));
+                                                peersTxt.setText(String.format("Peers: %s", messageMap.get("peers")));
+                                                timeTxt.setText(String.format("Time Sent: %s",messageMap.get("time")));
+
 
                                                 String difference = Long.toString(currentTime - Long.parseLong(Objects.requireNonNull(messageMap.get("time"))));
                                                 Log.e("Time From Sent to Received", difference);
@@ -542,11 +545,12 @@ public class MainActivity extends AppCompatActivity {
                                                 Log.e("TEMP MESSAGE", tempMSG);
                                                 MessageHelper helper = new MessageHelper();
                                                 HashMap<String, String> messageMap = helper.getMap(tempMSG);
-                                                senderTxt.setText(messageMap.get("sender"));
-                                                messageTxt.setText(messageMap.get("message"));
-                                                confidenceTxt.setText(messageMap.get("confidence"));
-                                                peersTxt.setText(messageMap.get("peers"));
-                                                timeTxt.setText(messageMap.get("time"));
+                                                senderTxt.setText(String.format("Sender: %s",messageMap.get("sender")));
+                                                messageTxt.setText(String.format("Message: %s", messageMap.get("message")));
+                                                confidenceTxt.setText(String.format("Confidence: %s", messageMap.get("confidence")));
+                                                peersTxt.setText(String.format("Peers: %s", messageMap.get("peers")));
+                                                timeTxt.setText(String.format("Time Sent: %s",messageMap.get("time")));
+
 
                                                 String difference = Long.toString(currentTime - Long.parseLong(Objects.requireNonNull(messageMap.get("time"))));
                                                 Log.e("Time From Sent to Received", difference);
