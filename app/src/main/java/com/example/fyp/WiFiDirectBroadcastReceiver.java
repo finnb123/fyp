@@ -1,10 +1,14 @@
 package com.example.fyp;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+
+import androidx.core.app.ActivityCompat;
 
 
 public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
@@ -19,6 +23,7 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
         this.activity = activity;
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
@@ -31,14 +36,16 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
             }
         }else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)){
             // Respond to new connection or disconnections
-            if(manager != null){
-                NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-                assert networkInfo != null;
-                if(networkInfo.isConnected()){
-                    manager.requestConnectionInfo(channel, activity.connectionInfoListener);
-                }else{
-                    activity.connectionStatus.setText("Not Connected");
-                }
+            if(manager == null){
+                return;
+            }
+            NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+            assert networkInfo != null;
+            if(networkInfo.isConnected()){
+                manager.requestConnectionInfo(channel, activity.connectionInfoListener);
+                activity.connectionStatus.setText("Connected");
+            }else{
+                activity.connectionStatus.setText("Not Connected");
             }
         }
     }

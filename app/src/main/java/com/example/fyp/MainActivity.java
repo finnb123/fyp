@@ -78,10 +78,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String MAIN_CHANNEL_ID = "fyp_main_notification";
     private static final int PERMISSION_REQUEST_CODE = 2;
     final String[] PERMISSIONS = {
-            android.Manifest.permission.ACCESS_COARSE_LOCATION,
-            android.Manifest.permission.ACCESS_FINE_LOCATION,
-            android.Manifest.permission.NEARBY_WIFI_DEVICES,
-            android.Manifest.permission.POST_NOTIFICATIONS
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.NEARBY_WIFI_DEVICES,
+            Manifest.permission.POST_NOTIFICATIONS
     };
 
     @Override
@@ -100,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        receiver = new WiFiDirectBroadcastReceiver(manager,channel,this);
         registerReceiver(receiver, intentFilter);
     }
 
@@ -140,9 +141,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void discoverPeers(){
         if (ActivityCompat.checkSelfPermission(MainActivity.this,
-                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 || ActivityCompat.checkSelfPermission(MainActivity.this,
-               android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+               Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
             requestRuntimePermission();
         }
         manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
@@ -161,7 +162,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void createGroup(){
         WifiP2pConfig config = new WifiP2pConfig();
-        for (WifiP2pDevice device : deviceArray){
+        Log.d("Create Group", Arrays.toString(deviceArray));
+        if(deviceArray!=null && deviceArray[0] != null){
+//            for (WifiP2pDevice device : deviceArray){
+            WifiP2pDevice device = deviceArray[0];
             config.deviceAddress = device.deviceAddress;
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
                 return;
@@ -169,14 +173,19 @@ public class MainActivity extends AppCompatActivity {
             manager.connect(channel, config, new WifiP2pManager.ActionListener() {
                 @Override
                 public void onSuccess() {
-                    Log.d("Peer Group", String.format("Connected to: %s", device.deviceAddress));
+                    //Log.d("Peer Group", String.format("Group formed with: %s", device.deviceAddress));
+                    //connectionStatus.setText("Group Formed");
+                    Log.d("Peer Group", "Create Group Success");
                 }
                 @Override
                 public void onFailure(int i) {
-                    Log.d("Peer Group", String.format("Error with: %s\nError is: %d", device.deviceAddress, i));
+                    //Log.d("Peer Group", String.format("Error with: %s\nError is: %d", device.deviceAddress, i));
+                    Log.d("Peer Group", "Issue connecting: " + i);
                 }
             });
         }
+        //}
+
     }
 
 
@@ -188,39 +197,38 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @SuppressLint("MissingPermission")
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                final WifiP2pDevice device = deviceArray[i];
-                WifiP2pConfig config = new WifiP2pConfig();
-                config.deviceAddress = device.deviceAddress;
-                manager.connect(channel, config, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        connectionStatus.setText(String.format("Connected: %s", device.deviceAddress));
-                        long currentDateTime = System.currentTimeMillis();
-                        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("H:mm:ss:SS");
-                        String currentTime = simpleDateFormat.format(currentDateTime);
-                        Toast.makeText(MainActivity.this, currentTime, Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onFailure(int i) {
-                        connectionStatus.setText(R.string.not_connected);
-                        Log.e("List View", String.valueOf(i));
-                    }
-                });
-            }
-        });
+//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @SuppressLint("MissingPermission")
+//            @Override
+//            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+//                Log.e("List click", Arrays.toString(deviceArray));
+//                final WifiP2pDevice device = deviceArray[i];
+//                WifiP2pConfig config = new WifiP2pConfig();
+//
+//                config.deviceAddress = device.deviceAddress;
+//                manager.connect(channel, config, new WifiP2pManager.ActionListener() {
+//                    @Override
+//                    public void onSuccess() {
+//                        connectionStatus.setText(String.format("Connected: %s", device.deviceAddress));
+//                        long currentDateTime = System.currentTimeMillis();
+//                        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("H:mm:ss:SS");
+//                        String currentTime = simpleDateFormat.format(currentDateTime);
+//                        Toast.makeText(MainActivity.this, currentTime, Toast.LENGTH_SHORT).show();
+//                    }
+//
+//                    @Override
+//                    public void onFailure(int i) {
+//                        connectionStatus.setText(R.string.not_connected);
+//                        Log.e("List View", String.valueOf(i));
+//                    }
+//                });
+//            }
+//        });
 
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 ExecutorService executor = Executors.newSingleThreadExecutor();
-//                finalMsg = new MessageHelper(typeMsg.getText().toString(), 1.00, deviceNameArray).getFullMessage();
-                //finalMsg = new MessageHelper(String.format("We are now connected... I am the %s",), 1.00, deviceNameArray).getFullMessage();
-                //Log.d("JSON STRING MESSAGE", finalMsg);
                 Random rng = new Random();
                 double confidence = rng.nextDouble();
                 executor.execute(new Runnable() {
@@ -278,27 +286,6 @@ public class MainActivity extends AppCompatActivity {
     WifiP2pManager.PeerListListener peerListListener = new WifiP2pManager.PeerListListener() {
         @Override
         public void onPeersAvailable(WifiP2pDeviceList peerList) {
-//            if(!wifiP2pDeviceList.equals(peers)){
-//                peers.clear();
-//                peers.addAll(wifiP2pDeviceList.getDeviceList());
-//
-//                deviceNameArray = new String[wifiP2pDeviceList.getDeviceList().size()];
-//                deviceArray = new WifiP2pDevice[wifiP2pDeviceList.getDeviceList().size()];
-//
-//                int index = 0;
-//                for(WifiP2pDevice device: wifiP2pDeviceList.getDeviceList()){
-//                    deviceNameArray[index] = device.deviceName;
-//                    deviceArray[index] = device;
-//                    index++;
-//                }
-//
-//                ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, deviceNameArray);
-//                listView.setAdapter(adapter);
-//
-//                if(peers.isEmpty()){
-//                    connectionStatus.setText(R.string.peer_list_empty);
-//                }
-//            }
             List<WifiP2pDevice> refreshedPeers = new ArrayList<>(peerList.getDeviceList());
             if(!refreshedPeers.equals(peers)){
                 peers.clear();
@@ -308,26 +295,68 @@ public class MainActivity extends AppCompatActivity {
 
                 int index = 0;
                 for(WifiP2pDevice device: peerList.getDeviceList()){
+                    if(device.deviceName.startsWith("Android")){
                         deviceNameArray[index] = device.deviceName;
                         deviceArray[index] = device;
                         index++;
+                    }
                 }
-
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, deviceNameArray);
-                listView.setAdapter(adapter);
+//                ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, deviceNameArray);
+//                listView.setAdapter(adapter);
+                Log.d("Peer List Listener", Arrays.toString(deviceArray));
+                Log.d("Peer List Listener", Arrays.toString(deviceNameArray ));
                 createGroup();
             }
-            if(peers.isEmpty()){
-                Log.d("Peer List", "No devices found");
-                connectionStatus.setText(R.string.peer_list_empty);
-                discoverPeers();
-            }
+
+
+
+//            List<WifiP2pDevice> refreshedPeers = new ArrayList<>(peerList.getDeviceList());
+//            List<WifiP2pDevice> filteredRefreshed = new ArrayList<>();
+//            if(!refreshedPeers.equals(peers)){
+//                peers.clear();
+//                peers.addAll(refreshedPeers);
+////                peers.removeIf()
+////                deviceNameArray = new String[peerList.getDeviceList().size()];
+////                deviceArray = new WifiP2pDevice[peerList.getDeviceList().size()];
+//                ArrayList<String> deviceNameArrayList = new ArrayList<>();
+//                //deviceArray = new WifiP2pDevice[refreshedPeers.size()];
+//                ArrayList<WifiP2pDevice> deviceArrayList = new ArrayList<>();
+//
+////                int index = 0;
+//                for(WifiP2pDevice device: refreshedPeers){
+//                    //if(device.deviceName.startsWith("Android")){
+//                        deviceNameArrayList.add(device.deviceName);
+//                        deviceArrayList.add(device);
+//                        //peers.add(device);
+//                    //}
+////                        index++;
+//                }
+//                String[] deviceNameArray = new String[deviceNameArrayList.size()];
+//                deviceNameArray = deviceNameArrayList.toArray(deviceNameArray);
+//
+//                WifiP2pDevice[] deviceArray = new WifiP2pDevice[deviceArrayList.size()];
+//                deviceArray = deviceArrayList.toArray(deviceArray);
+//
+//                Log.d("Discovery Device", Arrays.toString(deviceArray));
+//                Log.d("Discovery Device Name", Arrays.toString(deviceNameArray));
+//                Log.d("Discovery Peers", peers.toString());
+//
+//                ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, deviceNameArray);
+//                listView.setAdapter(adapter);
+//                createGroup();
+//            }
+//            if(peers.isEmpty()){
+//                Log.d("Peer List", "No devices found");
+//                connectionStatus.setText(R.string.peer_list_empty);
+//                discoverPeers();
+//            }
         }
     };
 
     WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
         @Override
         public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
+            Log.d("On Connection Info", "Firing");
             final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
             if(wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner){
                 connectionStatus.setText(R.string.host);
