@@ -207,33 +207,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @SuppressLint("MissingPermission")
-//            @Override
-//            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-//                Log.e("List click", Arrays.toString(deviceArray));
-//                final WifiP2pDevice device = deviceArray[i];
-//                WifiP2pConfig config = new WifiP2pConfig();
-//
-//                config.deviceAddress = device.deviceAddress;
-//                manager.connect(channel, config, new WifiP2pManager.ActionListener() {
-//                    @Override
-//                    public void onSuccess() {
-//                        connectionStatus.setText(String.format("Connected: %s", device.deviceAddress));
-//                        long currentDateTime = System.currentTimeMillis();
-//                        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("H:mm:ss:SS");
-//                        String currentTime = simpleDateFormat.format(currentDateTime);
-//                        Toast.makeText(MainActivity.this, currentTime, Toast.LENGTH_SHORT).show();
-//                    }
-//
-//                    @Override
-//                    public void onFailure(int i) {
-//                        connectionStatus.setText(R.string.not_connected);
-//                        Log.e("List View", String.valueOf(i));
-//                    }
-//                });
-//            }
-//        });
 
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -309,8 +282,6 @@ public class MainActivity extends AppCompatActivity {
                     deviceArray[index] = device;
                     index++;
                 }
-//                ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, deviceNameArray);
-//                listView.setAdapter(adapter);
                 Log.d("Peer List Listener", Arrays.toString(deviceArray));
                 Log.d("Peer List Listener", Arrays.toString(deviceNameArray ));
                 createGroup();
@@ -318,46 +289,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-//            List<WifiP2pDevice> refreshedPeers = new ArrayList<>(peerList.getDeviceList());
-//            List<WifiP2pDevice> filteredRefreshed = new ArrayList<>();
-//            if(!refreshedPeers.equals(peers)){
-//                peers.clear();
-//                peers.addAll(refreshedPeers);
-////                peers.removeIf()
-////                deviceNameArray = new String[peerList.getDeviceList().size()];
-////                deviceArray = new WifiP2pDevice[peerList.getDeviceList().size()];
-//                ArrayList<String> deviceNameArrayList = new ArrayList<>();
-//                //deviceArray = new WifiP2pDevice[refreshedPeers.size()];
-//                ArrayList<WifiP2pDevice> deviceArrayList = new ArrayList<>();
-//
-////                int index = 0;
-//                for(WifiP2pDevice device: refreshedPeers){
-//                    //if(device.deviceName.startsWith("Android")){
-//                        deviceNameArrayList.add(device.deviceName);
-//                        deviceArrayList.add(device);
-//                        //peers.add(device);
-//                    //}
-////                        index++;
-//                }
-//                String[] deviceNameArray = new String[deviceNameArrayList.size()];
-//                deviceNameArray = deviceNameArrayList.toArray(deviceNameArray);
-//
-//                WifiP2pDevice[] deviceArray = new WifiP2pDevice[deviceArrayList.size()];
-//                deviceArray = deviceArrayList.toArray(deviceArray);
-//
-//                Log.d("Discovery Device", Arrays.toString(deviceArray));
-//                Log.d("Discovery Device Name", Arrays.toString(deviceNameArray));
-//                Log.d("Discovery Peers", peers.toString());
-//
-//                ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, deviceNameArray);
-//                listView.setAdapter(adapter);
-//                createGroup();
-//            }
-//            if(peers.isEmpty()){
-//                Log.d("Peer List", "No devices found");
-//                connectionStatus.setText(R.string.peer_list_empty);
-//                discoverPeers();
-//            }
+
         }
     };
 
@@ -379,26 +311,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-
-
-
-
-//    @Override
-//    protected void onDestroy(){
-//        super.onDestroy();
-//        try{
-//            if(serverClass != null && (serverClass.serverSocket != null)){
-//                serverClass.end();
-//            }
-//            if(clientClass != null && socket != null){
-//                clientClass.end();
-//            }
-//
-//
-//        } catch (Error e) {
-//            Log.e("Socket", e.toString());
-//        }
-//    }
 
     public class ServerClass extends Thread{
         ServerSocket serverSocket;
