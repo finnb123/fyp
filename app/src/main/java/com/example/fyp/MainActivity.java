@@ -347,11 +347,11 @@ public class MainActivity extends AppCompatActivity {
 //                listView.setAdapter(adapter);
 //                createGroup();
 //            }
-//            if(peers.isEmpty()){
-//                Log.d("Peer List", "No devices found");
-//                connectionStatus.setText(R.string.peer_list_empty);
-//                discoverPeers();
-//            }
+            if(peers.isEmpty()){
+                Log.d("Peer List", "No devices found");
+                connectionStatus.setText(R.string.peer_list_empty);
+                discoverPeers();
+            }
         }
     };
 
