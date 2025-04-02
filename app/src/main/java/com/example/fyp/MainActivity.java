@@ -221,8 +221,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 ExecutorService executor = Executors.newSingleThreadExecutor();
-                Random rng = new Random();
-                double confidence = rng.nextDouble();
                 executor.execute(new Runnable() {
                     String finalMsg;
                     @Override
@@ -510,6 +508,11 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             } catch (IOException e) {
                                 Log.d("Error", e.toString());
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException ex) {
+                                    throw new RuntimeException(ex);
+                                }
                             }
                         }
                     }
