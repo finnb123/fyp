@@ -2,6 +2,7 @@ package com.example.fyp;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -228,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
 
                         if(peers.isEmpty()){
-                            messageTextView.setText(R.string.peer_list_empty);
+                            Log.e("Peers List", "EMPTY");
                         }
                         else if(isHost){
                             if(serverClass!=null){
