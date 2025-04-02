@@ -395,6 +395,11 @@ public class MainActivity extends AppCompatActivity {
                                                     if(confidenceList.size()>1){
                                                         if(confAvg(confidenceList) > 0.4){
                                                             Log.e("SHOOTING DETECTED", "SHOOTING DETECTED");
+                                                            senderTxt.setText("SHOOTING DETECTED");
+                                                            messageTxt.setText("FIND A SAFE LOCATION");
+                                                            confidenceTxt.setText("CONTACT EMERGENCY SERVICES");
+                                                            peersTxt.setText("CALL 999");
+                                                            timeTxt.setText("");
                                                         }
                                                     }
                                                 }else{
