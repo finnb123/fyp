@@ -39,6 +39,7 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -74,6 +75,10 @@ public class MainActivity extends AppCompatActivity {
     ClientClass clientClass;
     boolean isHost;
     InetAddress groupOwnerAddress;
+
+    Double confidence;
+    ArrayList<Double> confidenceList = new ArrayList<>();
+
 
     private static final String MAIN_CHANNEL_ID = "fyp_main_notification";
     private static final int PERMISSION_REQUEST_CODE = 2;
@@ -136,6 +141,9 @@ public class MainActivity extends AppCompatActivity {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 
+        Random rng = new Random();
+        confidence = 0.5 +(rng.nextDouble()*0.5);
+        confidenceList.add(confidence);
     }
 
 
@@ -380,9 +388,18 @@ public class MainActivity extends AppCompatActivity {
                                                 peersTxt.setText(String.format("Peers: %s", messageMap.get("peers")));
                                                 timeTxt.setText(String.format("Time Sent: %s",messageMap.get("time")));
 
-
-                                                String difference = Long.toString(currentTime - Long.parseLong(Objects.requireNonNull(messageMap.get("time"))));
-                                                Log.e("Time From Sent to Received", difference);
+                                                Double clientConfidence = Double.valueOf(Objects.requireNonNull(messageMap.get("confidence")));
+                                                if(!confidenceList.contains(clientConfidence)){
+                                                    confidenceList.add(clientConfidence);
+                                                    Log.d("Confidence List", "Added value\nNew list is: " + confidenceList.toString());
+                                                    if(confidenceList.size()>1){
+                                                        if(confAvg(confidenceList) > 0.4){
+                                                            Log.e("SHOOTING DETECTED", "SHOOTING DETECTED");
+                                                        }
+                                                    }
+                                                }else{
+                                                    Log.d("Confidence List", "Value already added");
+                                                }
                                             }
                                         });
 
@@ -398,6 +415,15 @@ public class MainActivity extends AppCompatActivity {
                 });
 
         }
+    }
+
+    public double confAvg(ArrayList<Double> confidenceList){
+        Double i = 0.0, total = 0.0;
+        for(Double c: confidenceList){
+            total += c;
+            i += 1;
+        }
+        return total/i;
     }
 
     public class ClientClass extends Thread{
