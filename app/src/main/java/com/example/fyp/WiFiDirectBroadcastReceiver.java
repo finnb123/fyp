@@ -4,11 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pManager;
-
-import androidx.core.app.ActivityCompat;
 
 
 public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
@@ -43,7 +40,6 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
             assert networkInfo != null;
             if(networkInfo.isConnected()){
                 manager.requestConnectionInfo(channel, activity.connectionInfoListener);
-                activity.connectionStatus.setText("Connected");
             }else{
                 activity.connectionStatus.setText("Not Connected");
             }

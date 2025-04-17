@@ -6,7 +6,6 @@ import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -19,33 +18,30 @@ import android.os.Bundle;
 
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -58,12 +54,9 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView connectionStatus, messageTextView, senderTxt, messageTxt, confidenceTxt, timeTxt, peersTxt;
+    TextView connectionStatus, senderTxt, messageTxt, confidenceTxt, timeTxt, peersTxt;
     Button discoverButton;
-    //ListView listView;
-    EditText typeMsg;
     ImageButton sendButton;
-
     WifiP2pManager manager;
     WifiP2pManager.Channel channel;
     BroadcastReceiver receiver;
@@ -72,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     String[] deviceNameArray;
     WifiP2pDevice[] deviceArray;
     Socket socket;
-    ServerClass serverClass;
+    GroupOwnerClass groupOwnerClass;
     ClientClass clientClass;
     boolean isHost;
     InetAddress groupOwnerAddress;
@@ -80,8 +73,13 @@ public class MainActivity extends AppCompatActivity {
     Double confidence;
     ArrayList<Double> confidenceList = new ArrayList<>();
 
+    // Testing
+    double currentTime;
+    double tcpTime;
+    double groupTime;
+    double startTime;
 
-    private static final String MAIN_CHANNEL_ID = "fyp_main_notification";
+
     private static final int PERMISSION_REQUEST_CODE = 2;
     final String[] PERMISSIONS = {
             Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -96,9 +94,13 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        // For Testing
+        startTime = System.currentTimeMillis();
+        // End Testing
+
         initialWork();
 
-        exqListener();
+        buttonListener();
 
         discoverPeers();
     }
@@ -116,6 +118,18 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(receiver);
     }
 
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        if(groupOwnerClass !=null){
+            groupOwnerClass.end();
+        }
+        if(clientClass!=null){
+            clientClass.end();
+        }
+
+    }
+
     private void initialWork() {
         connectionStatus = findViewById(R.id.connection_status);
         senderTxt = findViewById(R.id.senderTxt);
@@ -124,8 +138,6 @@ public class MainActivity extends AppCompatActivity {
         peersTxt = findViewById(R.id.peersTxt);
         timeTxt = findViewById(R.id.timeTxt);
         discoverButton = findViewById(R.id.buttonDiscover);
-        //listView = findViewById(R.id.listView);
-        //typeMsg = findViewById(R.id.editTextTypeMsg);
         sendButton = findViewById(R.id.sendButton);
         NotificationListener listener = new NotificationListener();
         requestRuntimePermission();
@@ -134,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
             openPermissions();
         }
         listener.onListenerConnected();
+
         manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         channel = manager.initialize(this, getMainLooper(), null);
         receiver = new WiFiDirectBroadcastReceiver(manager, channel, this);
@@ -142,9 +155,17 @@ public class MainActivity extends AppCompatActivity {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 
-        Random rng = new Random();
-        confidence = 0.5 +(rng.nextDouble()*0.5);
+        //Random rng = new Random();
+        //confidence = 0.5 +(rng.nextDouble()*0.5);
+        confidence = 0.4;
         confidenceList.add(confidence);
+    }
+
+    public boolean hasNotificationAccess(Context context){
+        return Settings.Secure.getString(
+                context.getApplicationContext().getContentResolver(),
+                "enabled_notification_listeners"
+        ).contains(context.getApplicationContext().getPackageName());
     }
 
 
@@ -192,6 +213,13 @@ public class MainActivity extends AppCompatActivity {
                             //Log.d("Peer Group", String.format("Group formed with: %s", device.deviceAddress));
                             //connectionStatus.setText("Group Formed");
                             Log.d("Peer Group", "Create Group Success");
+
+                            //testing
+                            double newTime = System.currentTimeMillis();
+                            groupTime = newTime-startTime;
+                            String timeToGF = "Group Formed: " + groupTime;
+                            Toast.makeText(MainActivity.this, timeToGF, Toast.LENGTH_LONG ).show();
+                            //end testing
                         }
 
                         @Override
@@ -208,7 +236,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void exqListener() {
+
+
+    private void buttonListener() {
         discoverButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -230,9 +260,9 @@ public class MainActivity extends AppCompatActivity {
                             Log.e("Peers List", "EMPTY");
                         }
                         else if(isHost){
-                            if(serverClass!=null){
+                            if(groupOwnerClass !=null){
                                 finalMsg = new MessageHelper("We are now connected... I am the host", confidence, deviceNameArray).getFullMessage();
-                                serverClass.write(finalMsg.getBytes());
+                                groupOwnerClass.write(finalMsg.getBytes());
                             }
                         }else{
                             if(clientClass!=null){
@@ -306,20 +336,20 @@ public class MainActivity extends AppCompatActivity {
             Log.d("On Connection Info", "Firing");
             groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
             if(wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner){
-                connectionStatus.setText(R.string.host);
                 isHost = true;
-                serverClass = new ServerClass();
-                serverClass.start();
+                groupOwnerClass = new GroupOwnerClass();
+                groupOwnerClass.start();
             }else if (wifiP2pInfo.groupFormed){
-                connectionStatus.setText(R.string.client);
+
                 isHost = false;
                 clientClass = new ClientClass(groupOwnerAddress);
                 clientClass.start();
+
             }
         }
     };
 
-    public class ServerClass extends Thread{
+    public class GroupOwnerClass extends Thread{
         ServerSocket serverSocket;
         private InputStream inputStream;
         private OutputStream outputStream;
@@ -335,13 +365,65 @@ public class MainActivity extends AppCompatActivity {
                 throw new RuntimeException(e);
             }
         }
-//        public void end(){
-//            try {
-//                socket.close();
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
+        public void end(){
+            try {
+                if(socket!=null){
+                    socket.close();
+                    Log.d("GO Class", "Closed socket");
+                }
+                if(serverSocket!=null){
+                    serverSocket.close();
+                    Log.d("GO Class", "Closed GO socket");
+                }
+                Log.d("GO Class", "Ended");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public void shooterDetected(){
+            Log.e("SHOOTING DETECTED", "SHOOTING DETECTED");
+            senderTxt.setText("SHOOTING DETECTED");
+            messageTxt.setText("FIND A SAFE LOCATION");
+            confidenceTxt.setText("CONTACT EMERGENCY SERVICES");
+            peersTxt.setText("CALL 999");
+            timeTxt.setText("");
+        }
+
+
+        public boolean consensusDecision(ArrayList<Double> confidenceList){
+            int size = confidenceList.size();
+            double avg = 0.0;
+            for(Double c: confidenceList){
+                avg+=c;
+            }
+            avg = avg/size;
+
+            if(size>1){
+                switch(size){
+                    case 2: case 3: case 4: case 5:
+                        if(avg> 0.9){
+                            return true;
+                        }
+                        break;
+                    case 6: case 7: case 8: case 9: case 10:
+                        if(avg > 0.85){
+                            return true;
+                        }
+                        break;
+                    case 11: case 12: case 13: case 14: case 15:
+                        if(avg > 0.8){
+                            return true;
+                        }
+                        break;
+                    default:
+                        if(avg > 0.7){
+                            return true;
+                        }
+                }
+            }
+            return false;
+        }
 
         @Override
         public void run(){
@@ -349,10 +431,18 @@ public class MainActivity extends AppCompatActivity {
                 serverSocket = new ServerSocket();
                 serverSocket.setReuseAddress(true);
                 serverSocket.bind(new InetSocketAddress(8888));
-
                 socket = serverSocket.accept();
                 inputStream = socket.getInputStream();
                 outputStream = socket.getOutputStream();
+
+                connectionStatus.setText(R.string.host);
+
+                double newTime = System.currentTimeMillis();
+                tcpTime = newTime-startTime;
+                String msg = "Group Time: " + groupTime + "\nTCP Time: " + tcpTime;
+
+                String finalMsg = new MessageHelper("We are now connected... I am the host\n" + msg, confidence, deviceNameArray).getFullMessage();
+                this.write(finalMsg.getBytes());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -372,7 +462,6 @@ public class MainActivity extends AppCompatActivity {
                                     bytes = inputStream.read(buffer);
                                     if (bytes > 0) {
                                         int finalBytes = bytes;
-                                        long currentTime = System.currentTimeMillis();
                                         handler.post(new Runnable() {
                                             @SuppressLint("SetTextI18n")
                                             @Override
@@ -385,21 +474,17 @@ public class MainActivity extends AppCompatActivity {
                                                 messageTxt.setText(String.format("Message: %s", messageMap.get("message")));
                                                 confidenceTxt.setText(String.format("Confidence: %s", messageMap.get("confidence")));
                                                 peersTxt.setText(String.format("Peers: %s", messageMap.get("peers")));
-                                                timeTxt.setText(String.format("Time Sent: %s",messageMap.get("time")));
+                                                double newTime = System.currentTimeMillis();
+                                                timeTxt.setText(String.format("Time to receive: %s", newTime-startTime));
 
                                                 Double clientConfidence = Double.valueOf(Objects.requireNonNull(messageMap.get("confidence")));
                                                 if(!confidenceList.contains(clientConfidence)){
                                                     confidenceList.add(clientConfidence);
                                                     Log.d("Confidence List", "Added value\nNew list is: " + confidenceList.toString());
-                                                    if(confidenceList.size()>1){
-                                                        if(confAvg(confidenceList) > 0.4){
-                                                            Log.e("SHOOTING DETECTED", "SHOOTING DETECTED");
-                                                            senderTxt.setText("SHOOTING DETECTED");
-                                                            messageTxt.setText("FIND A SAFE LOCATION");
-                                                            confidenceTxt.setText("CONTACT EMERGENCY SERVICES");
-                                                            peersTxt.setText("CALL 999");
-                                                            timeTxt.setText("");
-                                                        }
+                                                    if(consensusDecision(confidenceList)){
+                                                        shooterDetected();
+                                                    }else{
+                                                        Log.d("GO Class", "Average under threshold");
                                                     }
                                                 }else{
                                                     Log.d("Confidence List", "Value already added");
@@ -419,15 +504,6 @@ public class MainActivity extends AppCompatActivity {
                 });
 
         }
-    }
-
-    public double confAvg(ArrayList<Double> confidenceList){
-        Double i = 0.0, total = 0.0;
-        for(Double c: confidenceList){
-            total += c;
-            i += 1;
-        }
-        return total/i;
     }
 
     public class ClientClass extends Thread{
@@ -452,19 +528,32 @@ public class MainActivity extends AppCompatActivity {
                 throw new RuntimeException(e);
             }
         }
-//        public void end(){
-//            try {
-//                socket.close();
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
+        public void end(){
+            try {
+                if(socket!=null){
+                    socket.close();
+                    Log.d("Client Class", "Closed socket");
+                }
+                Log.d("Client Class", "Ended");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         @Override
         public void run() {
             try{
                 socket.connect(new InetSocketAddress(hostAdd, 8888), 500);
                 inputStream = socket.getInputStream();
                 outputStream = socket.getOutputStream();
+
+                connectionStatus.setText(R.string.client);
+
+                double newTime = System.currentTimeMillis();
+                tcpTime = newTime-startTime;
+
+                String msg = "Group Time: " + groupTime + "\nTCP Time: " + tcpTime;
+                String finalMsg = new MessageHelper("We are now connected... I am the Client\n" + msg, confidence, deviceNameArray).getFullMessage();
+                this.write(finalMsg.getBytes());
             } catch (IOException e){
                 Log.e("Client", e.toString());
             }
@@ -485,7 +574,7 @@ public class MainActivity extends AppCompatActivity {
                                     bytes = inputStream.read(buffer);
                                     if (bytes > 0) {
                                         int finalBytes = bytes;
-                                        long currentTime = System.currentTimeMillis();
+
                                         handler.post(new Runnable() {
                                             @Override
                                             public void run() {
@@ -497,41 +586,23 @@ public class MainActivity extends AppCompatActivity {
                                                 messageTxt.setText(String.format("Message: %s", messageMap.get("message")));
                                                 confidenceTxt.setText(String.format("Confidence: %s", messageMap.get("confidence")));
                                                 peersTxt.setText(String.format("Peers: %s", messageMap.get("peers")));
-                                                timeTxt.setText(String.format("Time Sent: %s",messageMap.get("time")));
+                                                double newTime = System.currentTimeMillis();
+                                                timeTxt.setText(String.format("Time to Receive: %s",newTime-startTime));
 
 
-                                                String difference = Long.toString(currentTime - Long.parseLong(Objects.requireNonNull(messageMap.get("time"))));
-                                                Log.e("Time From Sent to Received", difference);
                                             }
                                         });
                                     }
                                 }
                             } catch (IOException e) {
                                 Log.d("Error", e.toString());
-                                try {
-                                    Thread.sleep(100);
-                                } catch (InterruptedException ex) {
-                                    throw new RuntimeException(ex);
-                                }
+                                end();
                             }
                         }
                     }
                 });
-
-
-
-
         }
     }
-
-    public boolean hasNotificationAccess(Context context){
-        return Settings.Secure.getString(
-                context.getApplicationContext().getContentResolver(),
-                "enabled_notification_listeners"
-        ).contains(context.getApplicationContext().getPackageName());
-    }
-
-
 
 
 }
